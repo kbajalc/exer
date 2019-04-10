@@ -3,7 +3,7 @@ import util = require('util');
 import { InspectOptions } from 'util';
 
 export interface Debug {
-  (namespace: string): Debugger;
+  (namespace?: string, enable?: boolean): Debugger;
   enable: (namespaces?: string) => void;
   disable: () => void;
   enabled: (namespaces: string) => boolean;
@@ -49,7 +49,11 @@ export { Debug as debug };
  * @api public
  */
 // tslint:disable-next-line:function-name
-export function Debug(namespace?: string): Debugger {
+export function Debug(namespace?: string, enable?: boolean): Debugger {
+  // tslint:disable-next-line:no-parameter-reassignment
+  namespace = namespace || 'debug';
+  if (enable) Debug.enable(namespace);
+
   let prevTime: [number, number];
 
   function debug(this: any, ...args: any[]): void {
