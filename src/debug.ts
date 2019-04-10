@@ -2,7 +2,7 @@ import tty = require('tty');
 import util = require('util');
 import { InspectOptions } from 'util';
 
-interface Debug {
+export interface Debug {
   (namespace: string): Debugger;
   enable: (namespaces?: string) => void;
   disable: () => void;
@@ -14,11 +14,11 @@ interface Debug {
   formatters: Formatters;
 }
 
-interface Formatters {
+export interface Formatters {
   [formatter: string]: (v: any) => string;
 }
 
-interface Debugger {
+export interface Debugger {
   (formatter: any, ...args: any[]): void;
 
   enabled: boolean;
@@ -38,6 +38,8 @@ interface Debugger {
 interface DebugOptions extends InspectOptions {
   hideDate: boolean;
 }
+
+export { Debug as debug };
 
 /**
  * Create a debugger with the given `namespace`.
