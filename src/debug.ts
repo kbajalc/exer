@@ -52,9 +52,6 @@ export { Debug as debug };
 export function Debug(namespace?: string, enable?: boolean): Debugger {
   // tslint:disable-next-line:no-parameter-reassignment
   namespace = namespace || 'debug';
-  if (enable) Debug.enable(namespace);
-
-  let prevTime: [number, number];
 
   function debug(this: any, ...args: any[]): void {
     // Disabled?
@@ -65,11 +62,11 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
 
     // const curr = Number(new Date());
     const curr = Debug.now();
-    const ms = Debug.millis(prevTime || curr);
+    const ms = Debug.millis(debug.prev || curr);
     self.diff = ms;
-    self.prev = prevTime;
+    self.prev = debug.prev;
     self.curr = curr;
-    prevTime = curr;
+    debug.prev = curr;
 
     let timer = '';
     if (this && this.name === Debug.time.name) {
@@ -119,8 +116,9 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
     logFn.apply(self, args);
   }
 
+  debug.prev = process.hrtime();
   debug.namespace = namespace;
-  debug.enabled = Debug.enabled(namespace);
+  debug.enabled = Debug.enabled(namespace) || enable;
   debug.useColors = Debug.useColors();
   debug.color = Debug.selectColor(namespace);
   debug.destroy = destroy;
