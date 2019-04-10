@@ -417,6 +417,10 @@ Debug.time = function time(...args: any[]) {
   return process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
+Debug.end = function end(...args: any[]) {
+  return process.stdout.write(util.format.call(util, ...args) + '\n');
+};
+
 Debug.timeEnd = function timeEnd(...args: any[]) {
   return process.stdout.write(util.format.call(util, ...args) + '\n');
 };
