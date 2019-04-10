@@ -1,0 +1,46 @@
+{
+  "name": "exer",
+  "version": "0.0.11",
+  "description": "Utils in TypeScript, Debug, NanoTimer ...",
+  "author": "kbajalc@gmail.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kbajalc/exer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kbajalc/exer/issues"
+  },
+  "tags": [
+    "typescript",
+    "utils",
+    "debug",
+    "timer"
+  ],
+  "main": "lib/index.js",
+  "types": "./lib/index.d.ts",
+  "source": "./src/index.ts",
+  "files": [
+    "lib"
+  ],
+  "origin": {
+    "debug": "4.1.0",
+    "nanotimer": "0.3.15"
+  },
+  "scripts": {
+    "clean": "rm -rf lib",
+    "build": "rm -rf lib ; tsc -p .",
+    "watch": "rm -rf lib ; tsc -p . --watch",
+    "release": "npm run build && npm version patch && git push --follow-tags && npm publish",
+    "beta": "npm run build && npm version patch && git push --follow-tags && npm publish --tag beta"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^10.12.30",
+    "ts-node": "^8.0.3",
+    "tslint": "^5.15.0",
+    "tslint-config-airbnb": "^5.11.1",
+    "tty": "^1.0.1",
+    "typescript": "^3.4.3"
+  }
+}
