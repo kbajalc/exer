@@ -157,6 +157,7 @@ Debug.formatArgs = function formatArgs(this: any, fun: any, timer: string, args:
     // fun.color
     let z = (fun.label || fun.name);
     if (z === 'timeEnd') z = 'time';
+    if (z === 'detail') z = 'debug';
     level = `${z.toUpperCase()} `;
   }
   const name = `[${this.namespace}]`;

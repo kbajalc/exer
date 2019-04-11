@@ -12,7 +12,7 @@ Work in pogress ...
 Installation
 ------------
 
-To use exeriot with node.js, install it using npm:
+To use exer utils with node.js, install it using npm:
 
 ```
   $ npm install exer
