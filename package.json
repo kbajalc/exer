@@ -34,9 +34,12 @@
     "release": "npm run build && npm version patch && git push --follow-tags && npm publish",
     "beta": "npm run build && npm version patch && git push --follow-tags && npm publish --tag beta"
   },
-  "dependencies": {},
+  "dependencies": {
+    "uuid": "^3.3.2"
+  },
   "devDependencies": {
     "@types/node": "^10.12.30",
+    "@types/uuid": "^3.4.4",
     "ts-node": "^8.0.3",
     "tslint": "^5.15.0",
     "tslint-config-airbnb": "^5.11.1",
