@@ -30,6 +30,7 @@ export interface Debugger {
   debug: (...args: any[]) => Debugger;
   trace: (...args: any[]) => Debugger;
   time: (...args: any[]) => Debugger;
+  end: (...args: any[]) => Debugger;
   timeEnd: (...args: any[]) => Debugger;
   namespace: string;
   extend: (namespace: string, delimiter?: string) => Debugger;
@@ -136,6 +137,7 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
   debug.debug = debug.bind(Debug.debug);
   debug.trace = debug.bind(Debug.trace);
   debug.time = debug.bind(Debug.time);
+  debug.end = debug.bind(Debug.end);
   debug.timeEnd = debug.bind(Debug.timeEnd);
 
   if (typeof Debug.init === 'function') Debug.init(debug);
