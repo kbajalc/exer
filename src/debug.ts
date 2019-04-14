@@ -433,17 +433,17 @@ Debug.traceIcon = '🔻';
 Debug.time = function time(...args: any[]) {
   return process.stdout.write(util.format.call(util, ...args) + '\n');
 };
-Debug.timeIcon = '🕛';
+Debug.timeIcon = '⏱️';
 
 Debug.end = function end(...args: any[]) {
   return process.stdout.write(util.format.call(util, ...args) + '\n');
 };
-Debug.endIcon = '🕗';
+Debug.endIcon = '⏱️';
 
 Debug.timeEnd = function timeEnd(...args: any[]) {
   return process.stdout.write(util.format.call(util, ...args) + '\n');
 };
-Debug.timeEndIcon = '🕗';
+Debug.timeEndIcon = '⏱️';
 
 Debug.now = function now(): [number, number] {
   return process.hrtime();

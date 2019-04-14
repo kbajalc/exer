@@ -151,13 +151,13 @@ export interface ModuleInfo {
 }
 
 export class ProcessInfo {
+  private static mainModule: CommonModule;
+  private static mainFile: string;
+  private static mainPackage: PackageInfo;
+
   private static entry: ModuleInfo;
-  private static rootPkg: PackageInfo;
   private static packages: Record<string, PackageInfo> = {};
   private static modules: Record<string, ModuleInfo> = {};
-
-  private static rootItem: CommonModule;
-  private static rootFile: string;
 
   private static serial: number = 0;
   private static cpuUsage = process.cpuUsage();
@@ -225,9 +225,9 @@ export class ProcessInfo {
 
   public static refresh() {
     const cache: NodeModule[] = Object.values(require.cache);
-    this.rootItem = cache[0];
-    this.rootFile = String(this.rootItem.filename || this.rootItem.id || this.rootItem.i);
-    this.rootPkg = {
+    this.mainModule = process.mainModule;
+    this.mainFile = this.mainModule && String(this.mainModule.filename || this.mainModule.id || this.mainModule.i) || '<main>';
+    this.mainPackage = {
       name: '.',
       // TODO: Find versions
       version: null,
@@ -240,10 +240,11 @@ export class ProcessInfo {
       modules: [],
       uses: [],
       imports: [],
-      path: null,
+      path: this.mainFile,
       json: null
     };
-    this.packages['.'] = this.rootPkg;
+    this.packages['.'] = this.mainPackage;
+    if (this.mainModule) ProcessInfo.resolve(this.mainModule);
     for (const mod of cache) ProcessInfo.resolve(mod);
   }
 
@@ -252,15 +253,15 @@ export class ProcessInfo {
     const file = String(mod.filename || id);
     if (this.modules[id]) return this.modules[id];
 
-    let name = (mod === this.rootItem) ? id : Utils.relative(file, this.rootFile);
+    let name = (mod === this.mainModule) ? id : Utils.relative(file, this.mainFile);
     const parent = mod.parent && this.modules[mod.parent.id];
     const level = parent && (parent.level + 1) || 0;
     const size = Utils.fsize(file) || 0;
     const info: ModuleInfo = { id, name, size, package: undefined, file, level, parent };
     this.modules[id] = info;
-    if (mod === this.rootItem) {
+    if (mod === this.mainModule) {
       this.entry = info;
-      this.rootPkg.import = info;
+      this.mainPackage.import = info;
     }
 
     const ix = name && name.indexOf('node_modules/');
@@ -298,13 +299,13 @@ export class ProcessInfo {
       pkg.level = Math.min(pkg.level, info.level);
       this.packages[pack] = pkg;
     } else {
-      info.package = this.rootPkg;
-      this.rootPkg.size += info.size;
-      if (!this.rootPkg.moduleCount) {
-        this.rootPkg.path = file;
+      info.package = this.mainPackage;
+      this.mainPackage.size += info.size;
+      if (!this.mainPackage.moduleCount) {
+        this.mainPackage.path = file;
       }
-      this.rootPkg.modules.push(info);
-      this.rootPkg.moduleCount++;
+      this.mainPackage.modules.push(info);
+      this.mainPackage.moduleCount++;
     }
 
     for (const item of mod.children || []) {
