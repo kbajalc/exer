@@ -1,6 +1,6 @@
 {
   "name": "exer",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "Utils in TypeScript, Debug, NanoTimer ...",
   "author": "kbajalc@gmail.com",
   "license": "MIT",
