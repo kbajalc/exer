@@ -22,6 +22,9 @@ export interface Debugger {
   (formatter: any, ...args: any[]): void;
 
   enabled: boolean;
+  useColors: boolean;
+  color: number;
+  diff: string | number;
   log: (...args: any[]) => Debugger;
   fatal: (...args: any[]) => Debugger;
   error: (...args: any[]) => Debugger;
@@ -38,9 +41,20 @@ export interface Debugger {
 
 interface DebugOptions extends InspectOptions {
   hideDate: boolean;
+  useConsole: boolean;
+  alwaysDiff: boolean;
 }
 
-export { Debug as debug };
+export enum DebugLevel {
+  ALL = 0,
+  TRACE = 0,
+  DEBUG = 1,
+  INFO = 2,
+  WARN = 3,
+  ERROR = 4,
+  FATAL = 5,
+  OFF = 6,
+}
 
 /**
  * Create a debugger with the given `namespace`.
@@ -54,14 +68,12 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
   // tslint:disable-next-line:no-parameter-reassignment
   namespace = namespace || 'debug';
 
-  function debug(this: any, ...args: any[]): void {
+  function debug(this: Function, ...args: any[]): void {
     // Disabled?
     if (!debug.enabled) return;
 
-    // const args: any[] = [...arguments];
-    const self = debug; // Set `diff` timestamp
+    const self = debug;
 
-    // const curr = Number(new Date());
     const curr = Debug.now();
     const ms = Debug.millis(debug.prev || curr);
     self.diff = ms;
@@ -72,7 +84,7 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
     let timer = '';
     let stack = '';
     if (this === Debug.trace) {
-      stack = new Error().stack.replace('Error', 'Trace');
+      stack = new Error().stack.replace('Error', 'Trace').split('\n').filter((t, i) => i !== 1).join('\n');
     } else if (this === Debug.time) {
       const label = args.shift() || 'default';
       if (Debug.times[label]) Debug.log(`Warning: Label '${label}' already exists for Debug.time()`);
@@ -154,23 +166,23 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
  *
  * @api public
  */
-Debug.formatArgs = function formatArgs(this: any, fun: any, timer: string, trace: string, args: any[]): void {
+Debug.formatArgs = function formatArgs(this: Debugger, fun: any, timer: string, trace: string, args: any[]): void {
   const useColors = this.useColors;
-  let z = 'log';
-  if (fun && fun.name !== 'log') {
-    // TODO: Color code per level
-    // fun.color
-    z = (fun.label || fun.name);
-    if (z === 'timeEnd') z = 'time';
-    if (z === 'detail') z = 'debug';
-  }
-  let level = `${z} `;
+
+  // TODO: Color code per level (fun.color)
+  let z = fun && fun.name || '';
+  if (z === 'timeEnd') z = 'time';
+  if (z === 'detail') z = 'debug';
+
+  let level = z.toUpperCase();
   if (this.useColors) {
     z = (Debug as any)[`${z}Icon`];
-    level = z ? (z + '  ') : level;
+    level = z ? (z + ' ') : level;
   }
+  if (level) level += ' ';
+
   const name = `[${this.namespace}]`;
-  const msg = trace ? trace.replace('Trace', args[0] !== '' ? 'Trace: ' + args[0] : 'Trace') : args[0];
+  const msg = trace ? trace.replace('Trace:', args[0] !== '' ? 'Trace: ' + args[0] : 'Trace:') : args[0];
   if (useColors) {
     const c = this.color;
     const colorCode = "\x1B[3" + (c < 8 ? c : '8;5;' + c);
@@ -179,8 +191,10 @@ Debug.formatArgs = function formatArgs(this: any, fun: any, timer: string, trace
     args[0] = level + prefix + timer + msg.split('\n').join('\n' + level + prefix);
     args.push(colorCode + 'm+' + Debug.humanize(this.diff) + "\x1B[0m");
   } else {
-    args[0] = getDate() + level + name + ' ' + timer + (args.length ? msg : '');
+    args[0] = getDate() + level + name + ' ' + timer + (args.length ? msg : '')
+      + (Debug.alwaysDiff() ? ' +' + Debug.humanize(this.diff) : '');
   }
+  // return util.format.call(util, ...args);
 };
 
 // Debug.debug = Debug;
@@ -299,6 +313,21 @@ Debug.useColors = function useColors() {
 };
 
 /**
+ * Is console instead of stdout/err used as output.
+ */
+Debug.useConsole = function useConsole() {
+  return 'useConsole' in Debug.inspectOpts
+    ? Boolean(Debug.inspectOpts.useConsole)
+    : true;
+};
+
+Debug.alwaysDiff = function alwaysDiff() {
+  return 'alwaysDiff' in Debug.inspectOpts
+    ? Boolean(Debug.inspectOpts.alwaysDiff)
+    : false;
+};
+
+/**
 * Selects a color for a debug namespace
 * @param {String} namespace The namespace string for the for the debug instance to be colored
 * @return {Number|String} An ANSI color code for the given namespace
@@ -391,59 +420,73 @@ Debug.coerce = function coerce(val: any) {
   return val;
 };
 
+Debug.level = DebugLevel.DEBUG;
+
+Debug.isBellow = function isBellow(ofLevel: DebugLevel) {
+  return Debug.level > ofLevel;
+};
+
+Debug.setLevel = function setLevel(toLevel: DebugLevel): void {
+  if (toLevel == null || toLevel === undefined) {
+    Debug.level = DebugLevel.OFF;
+  } else {
+    Debug.level = (DebugLevel[toLevel as any] || DebugLevel.INFO) as any;
+  }
+};
+
+Debug.logIcon = '';
+Debug.fatalIcon = '🛑';
+Debug.errorIcon = '❗';
+Debug.infoIcon = 'ℹ️';
+Debug.warnIcon = '⚠️';
+Debug.debugIcon = '🔹';
+Debug.traceIcon = '🔸';
+Debug.timeIcon = '⏱️';
+Debug.endIcon = '⏱️';
+Debug.timeEndIcon = '⏱️';
+
 /**
  * Invokes `util.format()` with the specified arguments and writes to stderr.
  */
 Debug.log = function log(...args: any[]) {
-  return process.stderr.write(util.format.call(util, ...args) + '\n');
+  Debug.useConsole() ? console.log(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
 Debug.fatal = function fatal(...args: any[]) {
-  return process.stderr.write(util.format.call(util, ...args) + '\n');
+  Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
 };
-Debug.fatalIcon = '🛑';
 
 Debug.error = function error(...args: any[]) {
-  return process.stderr.write(util.format.call(util, ...args) + '\n');
+  Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
 };
-Debug.errorIcon = '❗';
 
 Debug.info = function info(...args: any[]) {
-  return process.stdout.write(util.format.call(util, ...args) + '\n');
+  Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
-Debug.infoIcon = 'ℹ️';
 
 Debug.warn = function warn(...args: any[]) {
-  return process.stdout.write(util.format.call(util, ...args) + '\n');
+  Debug.useConsole() ? console.warn(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
-Debug.warnIcon = '⚠️';
 
 Debug.debug = function detail(...args: any[]) {
-  return process.stdout.write(util.format.call(util, ...args) + '\n');
+  Debug.useConsole() ? console.debug(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
-Debug.debugIcon = '🔹';
 
 Debug.trace = function trace(...args: any[]) {
-  return process.stdout.write(util.format.call(util, ...args) + '\n');
+  Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
-Debug.traceIcon = '🔻';
-
-// TODO: Implement time/end
 
 Debug.time = function time(...args: any[]) {
-  return process.stdout.write(util.format.call(util, ...args) + '\n');
+  Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
-Debug.timeIcon = '⏱️';
 
 Debug.end = function end(...args: any[]) {
-  return process.stdout.write(util.format.call(util, ...args) + '\n');
+  Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
-Debug.endIcon = '⏱️';
 
 Debug.timeEnd = function timeEnd(...args: any[]) {
-  return process.stdout.write(util.format.call(util, ...args) + '\n');
+  Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
-Debug.timeEndIcon = '⏱️';
 
 Debug.now = function now(): [number, number] {
   return process.hrtime();
@@ -493,3 +536,6 @@ function destroy(this: any) {
 function extend(this: any, namespace: string, delimiter: string) {
   return Debug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
 }
+
+export { Debug as debug };
+export default Debug;

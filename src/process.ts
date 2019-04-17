@@ -1,8 +1,9 @@
 import os = require('os');
-import { Utils } from './utils';
+import Utils = require('./utils');
 
 const LOAD_TIME = Math.round(process.uptime() * 1000);
 const CREATED = new Date(Date.now() - Math.round(LOAD_TIME));
+const ZEROSTAMP = Utils.micros();
 const IDENTITY = Utils.uuid();
 
 // Fake gql
@@ -19,6 +20,7 @@ export const ProcessInfoQuery: string = gql`{
       identity,
       # Stats
       created,
+      micostamp,
       state,
       loadTime,
       initTime,
@@ -71,11 +73,13 @@ export interface ProcessInfo {
   identity: string;
   // Stats
   created: Date;
+  zerostamp: number;
   state: string;
   loadTime: number;
   initTime: number;
   // Runtime
   timestamp: Date;
+  micostamp: number;
   serial: number;
   uptime: number;
   // Usage
@@ -187,14 +191,16 @@ export class ProcessInfo {
       identity: IDENTITY,
 
       created: CREATED,
+      zerostamp: ZEROSTAMP,
       state: this.serial ? 'warm' : 'cold',
       loadTime: LOAD_TIME,
       initTime: +span,
 
       timestamp: new Date(),
+      micostamp: Utils.micros(),
+
       serial: this.serial++,
       uptime: process.uptime(),
-
       memory: mem.rss,
       heapTotal: mem.heapTotal,
       heapUsed: mem.heapUsed,

@@ -38,10 +38,12 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.123",
     "@types/node": "^10.12.30",
     "@types/uuid": "^3.4.4",
-    "ts-node": "^8.0.3",
-    "tslint": "^5.15.0",
+    "lodash": "^4.17.11",
+    "ts-node": "^8.1.0",
+    "tslint": "^5.16.0",
     "tslint-config-airbnb": "^5.11.1",
     "tty": "^1.0.1",
     "typescript": "^3.4.3"

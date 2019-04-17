@@ -1,3 +1,12 @@
+const LOAD = process.hrtime();
+const ZERO = Date.now();
+
+export function micros(): number {
+  const hd = process.hrtime(LOAD);
+  const now = (ZERO + hd[0] * 1000) * 1000 + Math.floor(hd[1] / 1000);
+  return now;
+}
+
 export function time(): [number, number] {
   return process.hrtime();
 }
