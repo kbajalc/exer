@@ -25,16 +25,16 @@ export interface Debugger {
   useColors: boolean;
   color: number;
   diff: string | number;
-  log: (...args: any[]) => Debugger;
-  fatal: (...args: any[]) => Debugger;
-  error: (...args: any[]) => Debugger;
-  info: (...args: any[]) => Debugger;
-  warn: (...args: any[]) => Debugger;
-  debug: (...args: any[]) => Debugger;
-  trace: (...args: any[]) => Debugger;
-  time: (...args: any[]) => Debugger;
-  end: (...args: any[]) => Debugger;
-  timeEnd: (...args: any[]) => Debugger;
+  log: (...args: any[]) => void;
+  fatal: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+  info: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  debug: (...args: any[]) => void;
+  trace: (...args: any[]) => void;
+  time: (...args: any[]) => [number, number];
+  end: (...args: any[]) => [number, number];
+  timeEnd: (...args: any[]) => [number, number];
   namespace: string;
   extend: (namespace: string, delimiter?: string) => Debugger;
 }
@@ -68,34 +68,43 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
   // tslint:disable-next-line:no-parameter-reassignment
   namespace = namespace || 'debug';
 
-  function debug(this: Function, ...args: any[]): void {
+  function debug(this: Function, ...args: any[]): any {
     // Disabled?
     if (!debug.enabled) return;
 
     const self = debug;
 
-    const curr = Debug.now();
-    const ms = Debug.millis(debug.prev || curr);
-    self.diff = ms;
+    let hrt = process.hrtime();
+    const curr = hrt;
+    self.diff = Debug.millis(process.hrtime(debug.prev || curr));
     self.prev = debug.prev;
     self.curr = curr;
     debug.prev = curr;
 
+    // TODO: Move to functions
     let timer = '';
     let stack = '';
     if (this === Debug.trace) {
       stack = new Error().stack.replace('Error', 'Trace').split('\n').filter((t, i) => i !== 1).join('\n');
     } else if (this === Debug.time) {
-      const label = args.shift() || 'default';
-      if (Debug.times[label]) Debug.log(`Warning: Label '${label}' already exists for Debug.time()`);
+      const label = args.shift();
+      if (!label) {
+        Debug.times[hrt.join(':')] = hrt;
+        return hrt;
+      } else {
+        if (Debug.times[label]) Debug.log(`Warning: Label '${label}' already exists for Debug.time()`);
+        Debug.times[label] = hrt;
+      }
       timer = `(${label}: start)`;
-      Debug.times[label] = Debug.now();
     } else if (this === Debug.timeEnd || this === Debug.end) {
-      const label = args.shift() || 'default';
-      if (!Debug.times[label]) Debug.log(`Warning: No such label '${label}' for Debug.timeEnd()`);
-      const dif = Debug.millis(Debug.times[label]);
+      const first = args.shift();
+      const label = Array.isArray(first) ? first.join(':') : first || 'default';
+      const start = Debug.times[label];
+      if (!start) Debug.log(`Warning: No such label '${label}' for Debug.timeEnd()`);
+      hrt = process.hrtime(start);
+      const dif = Debug.humanize(Debug.millis(hrt));
       delete Debug.times[label];
-      timer = `(${label}: ${dif} ms)`;
+      timer = Array.isArray(first) ? `(${dif})` : `(${label}: ${dif})`;
     }
     if (timer && args.length === 0) {
       args.push(timer);
@@ -130,6 +139,8 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
     Debug.formatArgs.call(self, this, timer, stack, args);
     const logFn = this || Debug.log;
     logFn.apply(self, args);
+
+    return hrt;
   }
 
   debug.prev = process.hrtime();
@@ -476,8 +487,9 @@ Debug.trace = function trace(...args: any[]) {
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
-Debug.time = function time(...args: any[]) {
+Debug.time = function time(...args: any[]): [number, number] {
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
+  return void null;
 };
 
 Debug.end = function end(...args: any[]) {
@@ -488,14 +500,9 @@ Debug.timeEnd = function timeEnd(...args: any[]) {
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
-Debug.now = function now(): [number, number] {
-  return process.hrtime();
-};
-
-Debug.millis = function millis(start: [number, number], offset?: number): string {
-  const lapse = process.hrtime(start);
-  const ms = (lapse[0] * 1000) + Math.floor(lapse[1] / 1000000) - (offset || 0);
-  const ns = Math.floor((lapse[1] % 1000000) / 1000) / 1000;
+Debug.millis = function millis(span: [number, number], offset?: number): string {
+  const ms = (span[0] * 1000) + Math.floor(span[1] / 1000000) - (offset || 0);
+  const ns = Math.floor((span[1] % 1000000) / 1000) / 1000;
   return `${ms}${ns.toFixed(3).substring(1)}`;
 };
 
