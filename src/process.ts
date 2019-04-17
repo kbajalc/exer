@@ -20,12 +20,13 @@ export const ProcessInfoQuery: string = gql`{
       identity,
       # Stats
       created,
-      micostamp,
+      zerostamp,
       state,
       loadTime,
       initTime,
       # Runtime
       timestamp,
+      microstamp,
       serial,
       uptime,
       # Memory
@@ -79,7 +80,7 @@ export interface ProcessInfo {
   initTime: number;
   // Runtime
   timestamp: Date;
-  micostamp: number;
+  microstamp: number;
   serial: number;
   uptime: number;
   // Usage
@@ -197,7 +198,7 @@ export class ProcessInfo {
       initTime: +span,
 
       timestamp: new Date(),
-      micostamp: Utils.micros(),
+      microstamp: Utils.micros(),
 
       serial: this.serial++,
       uptime: process.uptime(),
