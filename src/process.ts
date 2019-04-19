@@ -169,20 +169,21 @@ export class ProcessInfo {
 
   public static get(level?: number): ProcessInfo {
     const start = Utils.time();
-    this.refresh();
+    (level > -1) && this.refresh();
     const mem = process.memoryUsage();
     const total = process.cpuUsage();
     const usage = this.cpuUsage = process.cpuUsage(this.cpuUsage);
-    const cpus = os.cpus().map(c => ({ model: c.model, speed: c.speed, ...c.times }));
-    const networks = Object.entries(os.networkInterfaces())
+
+    const cpus = (level > -2) ? os.cpus().map(c => ({ model: c.model, speed: c.speed, ...c.times })) : undefined;
+    const networks = (level > -2) ? Object.entries(os.networkInterfaces())
       .map(([k, v]): [string, any] => ([k, v.filter(i => !i.internal && i.family !== 'IPv6')]))
       .filter(([k, v]) => v.length)
-      .map(([k, v]) => ({ name: k, ...v[0] }));
+      .map(([k, v]) => ({ name: k, ...v[0] })) : undefined;
 
-    const packages = Object.values(this.packages);
-    const modules = Object.values(this.modules);
-    let scriptSize = 0;
-    modules.forEach(m => scriptSize += m.size);
+    const packages = (level > -1) ? Object.values(this.packages) : undefined;
+    const modules = (level > -1) ? Object.values(this.modules) : undefined;
+    let scriptSize = modules && 0;
+    modules && modules.forEach(m => scriptSize += m.size);
 
     const span = Utils.span(start);
     return {
@@ -202,31 +203,32 @@ export class ProcessInfo {
 
       serial: this.serial++,
       uptime: process.uptime(),
-      memory: mem.rss,
-      heapTotal: mem.heapTotal,
-      heapUsed: mem.heapUsed,
-      external: mem.external,
-      cpuUser: usage.user,
-      cpuSystem: usage.system,
-      cpuUserTotal: total.user,
-      cpuSystemTotal: total.system,
-      packageCount: packages.length,
-      moduleCount: modules.length,
+
+      memory: mem && mem.rss,
+      heapTotal: mem && mem.heapTotal,
+      heapUsed: mem && mem.heapUsed,
+      external: mem && mem.external,
+      cpuUser: usage && usage.user,
+      cpuSystem: usage && usage.system,
+      cpuUserTotal: total && total.user,
+      cpuSystemTotal: total && total.system,
+      packageCount: packages && packages.length,
+      moduleCount: modules && modules.length,
       scriptSize,
 
-      node: {
+      node: (level > -2) ? {
         pid: process.pid,
         arch: process.arch,
         platform: process.platform,
         release: process.release,
         versions: process.versions
-      },
+      } : undefined,
       cpus,
       networks,
 
       entry: this.entry,
-      packages: packages.filter((m: any) => level === undefined || m.level <= level),
-      modules: modules.filter((m: any) => level === undefined || m.level <= level)
+      packages: modules && packages.filter((m: any) => level === undefined || m.level <= level),
+      modules: modules && modules.filter((m: any) => level === undefined || m.level <= level)
     };
   }
 
