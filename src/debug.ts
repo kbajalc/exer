@@ -190,6 +190,7 @@ Debug.formatArgs = function formatArgs(this: Debugger, fun: any, timer: string, 
   let z = fun && fun.name || '';
   if (z === 'timeEnd') z = 'time';
   if (z === 'detail') z = 'debug';
+  if (z === 'log') z = '';
 
   let level = z.toUpperCase();
   if (this.useColors) {
