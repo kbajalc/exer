@@ -1,2 +1,5 @@
 Debug:
   ☐ Rename Debug as Logger @created(19-04-17 12:54)
+  ☐ LogLevel @created(19-04-19 20:20)
+  ☐ Move the logic to specific functions @created(19-04-19 20:27) @created(19-04-19 20:27)
+  

@@ -29,7 +29,7 @@
   },
   "scripts": {
     "clean": "rm -rf lib",
-    "build": "rm -rf lib ; tsc -p .",
+    "build": "rm -rf lib ; tsc -p . ; tslint -p .",
     "watch": "rm -rf lib ; tsc -p . --watch",
     "release": "npm run build && npm version patch && git push --follow-tags && npm publish",
     "beta": "npm run build && npm version patch && git push --follow-tags && npm publish --tag beta"
@@ -46,6 +46,6 @@
     "tslint": "^5.16.0",
     "tslint-config-airbnb": "^5.11.1",
     "tty": "^1.0.1",
-    "typescript": "^3.4.3"
+    "typescript": "^3.4.4"
   }
 }

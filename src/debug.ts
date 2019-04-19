@@ -89,7 +89,6 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
     } else if (this === Debug.time) {
       const label = args.shift();
       if (!label) {
-        Debug.times[hrt.join(':')] = hrt;
         return hrt;
       } else {
         if (Debug.times[label]) Debug.log(`Warning: Label '${label}' already exists for Debug.time()`);
@@ -98,8 +97,15 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
       timer = `(${label}: start)`;
     } else if (this === Debug.timeEnd || this === Debug.end) {
       const first = args.shift();
-      const label = Array.isArray(first) ? first.join(':') : first || 'default';
-      const start = Debug.times[label];
+      let label: string;
+      let start: [number, number];
+      if (Array.isArray(first) && first.length === 2 && Number.isFinite(first[0]) && Number.isFinite(first[1])) {
+        label = first.join(':');
+        start = first as [number, number];
+      } else {
+        label = first && String(first) || 'default';
+        start = Debug.times[label];
+      }
       if (!start) Debug.log(`Warning: No such label '${label}' for Debug.timeEnd()`);
       hrt = process.hrtime(start);
       const dif = Debug.humanize(Debug.millis(hrt));
@@ -169,7 +175,7 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
   if (typeof Debug.init === 'function') Debug.init(debug);
 
   Debug.instances.push(debug);
-  return debug;
+  return debug.log;
 }
 
 /**
@@ -544,5 +550,5 @@ function extend(this: any, namespace: string, delimiter: string) {
   return Debug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
 }
 
-export { Debug as debug };
+export { Debug as debug, Debugger as IDebugger };
 export default Debug;

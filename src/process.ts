@@ -279,7 +279,7 @@ export class ProcessInfo {
       const path = file.substring(0, file.indexOf('node_modules/') + 13) + pack + '/package.json';
       let json: any;
       try {
-        json = require(path);
+        json = (module || global as any)['require'](path);
       } catch (e) {
         json = { varsion: null };
       }
