@@ -143,7 +143,18 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
     }); // Apply env-specific formatting (colors, etc.)
 
     Debug.formatArgs.call(self, this, timer, stack, args);
-    const logFn = this || Debug.log;
+    const logFn = (
+      this === Debug.log ||
+      this === Debug.fatal ||
+      this === Debug.error ||
+      this === Debug.info ||
+      this === Debug.warn ||
+      this === Debug.debug ||
+      this === Debug.trace ||
+      this === Debug.time ||
+      this === Debug.end ||
+      this === Debug.timeEnd
+    ) ? this : Debug.log;
     logFn.apply(self, args);
 
     return hrt;
@@ -175,7 +186,7 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
   if (typeof Debug.init === 'function') Debug.init(debug);
 
   Debug.instances.push(debug);
-  return debug.log;
+  return debug;
 }
 
 /**
