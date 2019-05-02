@@ -1,9 +1,6 @@
-const notBase64 = /[^A-Z0-9+\/=\n\r]/i;
+import * as Lo from 'lodash';
 
-export function isUUID(str: string): boolean {
-  if (!str) return false;
-  return !!str.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
-}
+const notBase64 = /[^A-Z0-9+\/=\n\r]/i;
 
 // const base64 = new RegExp("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})([=]{1,2})?$");
 
@@ -28,50 +25,47 @@ export function isBase64(str: string): boolean {
     (firstPaddingChar === len - 2 && str[firstPaddingIndex + 1] === '=');
 }
 
+export function isUUID(str: string): boolean {
+  if (!str) return false;
+  return !!str.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+}
+
 export function wildcardMatch(rule: string, value: string) {
   return new RegExp('^' + rule.split('*').join('.*') + '$').test(value);
 }
 
 /**
- * Converts string into camelCase.
+ * Converts string to title case.
  *
- * @see http://stackoverflow.com/questions/2970525/converting-any-string-into-camel-case
- */
-export function camelCase(str: string, firstCapital: boolean = false): string {
-  return str.replace(/^([A-Z])|[\s-_](\w)/g, (match, p1, p2, offset) => {
-    if (firstCapital && offset === 0) return p1;
-    if (p2) return p2.toUpperCase();
-    return p1.toLowerCase();
-  });
-}
-
-/**
- * Converts string into snake_case.
- *
- * @see https://regex101.com/r/QeSm2I/1
- */
-export function snakeCase(str: string, upper?: boolean) {
-  const val = str.replace(/(?:([a-z])([A-Z]))|(?:((?!^)[A-Z])([a-z]))/g, '$1_$3$2$4');
-  return upper ? val.toUpperCase() : val.toLowerCase();
-}
-
-/**
- * Converts string into kebab-case.
- *
- * @see https://regex101.com/r/mrU9L0/1
- */
-export function kebapCase(str: string, upper?: boolean) {
-  const val = str.replace(/(?:([a-z])([A-Z]))|(?:((?!^)[A-Z])([a-z]))/g, '$1-$3$2$4');
-  return upper ? val.toUpperCase() : val.toLowerCase();
-}
-
-/**
- * Converts string into title-case.
- *
- * @see http://stackoverflow.com/questions/196972/convert-string-to-title-case-with-javascript
+ * @param string The string to convert.
+ * @return Returns the snake upper cased string.
  */
 export function titleCase(str: string): string {
-  return str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+  const val = Lo.camelCase(str);
+  if (!val) return val;
+  return val.substr(0, 1).toUpperCase() + val.substr(1);
+}
+
+/**
+ * Converts string to snake upper case.
+ *
+ * @param string The string to convert.
+ * @return Returns the snake upper cased string.
+ */
+export function snakeUpperCase(str: string) {
+  // const val = str.replace(/(?:([a-z])([A-Z]))|(?:((?!^)[A-Z])([a-z]))/g, '$1_$3$2$4');
+  const val = Lo.snakeCase(str);
+  return val.toUpperCase();
+}
+
+/**
+ * Converts string to kebab upper case.
+ *
+ * @param string The string to convert.
+ * @return Returns the kebab upper cased string.
+ */
+export function kebabUpperCase(str: string) {
+  return Lo.kebabCase(str).toUpperCase();
 }
 
 export function indent(text: string, spaces?: string | number) {

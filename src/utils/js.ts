@@ -14,6 +14,10 @@ export function isClass(cls: any): cls is Function {
   return false;
 }
 
+export function isPrototype(obj: any): boolean {
+  return !!(obj && obj.constructor && obj.constructor.prototype === obj);
+}
+
 // http://stackoverflow.com/questions/1007981/how-to-get-function-parameter-names-values-dynamically-from-javascript
 export function getArgs(func: (...args: any[]) => any): string[] {
   return (func + '')
