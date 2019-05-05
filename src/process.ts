@@ -169,10 +169,12 @@ export class ProcessInfo {
 
   public static get(level?: number): ProcessInfo {
     const start = Utils.time();
+    this.cpuUsage = process.cpuUsage(this.cpuUsage);
+
     (level > -1) && this.refresh();
-    const mem = process.memoryUsage();
-    const total = process.cpuUsage();
-    const usage = this.cpuUsage = process.cpuUsage(this.cpuUsage);
+    const mem = (level > -2) ? process.memoryUsage() : undefined;
+    const total = (level > -2) ? process.cpuUsage() : undefined;
+    const usage = (level > -2) ? this.cpuUsage : undefined;
 
     const cpus = (level > -2) ? os.cpus().map(c => ({ model: c.model, speed: c.speed, ...c.times })) : undefined;
     const networks = (level > -2) ? Object.entries(os.networkInterfaces())
