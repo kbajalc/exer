@@ -43,6 +43,7 @@ interface DebugOptions extends InspectOptions {
   hideDate: boolean;
   useConsole: boolean;
   alwaysDiff: boolean;
+  level: DebugLevel;
 }
 
 export enum DebugLevel {
@@ -283,7 +284,10 @@ Debug.inspectOpts = Object.keys(process.env)
     // Coerce string value into JS value
     const prop = key.substring(6).toLowerCase().replace(/_([a-z])/g, (_, k) => k.toUpperCase());
     let val: any = process.env[key];
-    if (/^(yes|on|true|enabled)$/i.test(val)) {
+    // console.log(prop, val);
+    if (prop === 'level') {
+      val = val in DebugLevel ? DebugLevel[val] : DebugLevel.DEBUG;
+    } else if (/^(yes|on|true|enabled)$/i.test(val)) {
       val = true;
     } else if (/^(no|off|false|disabled)$/i.test(val)) {
       val = false;
@@ -449,17 +453,21 @@ Debug.coerce = function coerce(val: any) {
   return val;
 };
 
-Debug.level = DebugLevel.DEBUG;
+Debug.level = function level(): DebugLevel {
+  return ('level' in Debug.inspectOpts)
+    ? Debug.inspectOpts.level
+    : DebugLevel.DEBUG;
+};
 
 Debug.isBellow = function isBellow(ofLevel: DebugLevel) {
-  return Debug.level > ofLevel;
+  return Debug.level() > ofLevel;
 };
 
 Debug.setLevel = function setLevel(toLevel: DebugLevel): void {
   if (toLevel == null || toLevel === undefined) {
-    Debug.level = DebugLevel.OFF;
+    Debug.inspectOpts.level = DebugLevel.OFF;
   } else {
-    Debug.level = (DebugLevel[toLevel as any] || DebugLevel.INFO) as any;
+    Debug.inspectOpts.level = (DebugLevel[toLevel as any] || DebugLevel.INFO) as any;
   }
 };
 
@@ -478,43 +486,53 @@ Debug.timeEndIcon = '⏱️';
  * Invokes `util.format()` with the specified arguments and writes to stderr.
  */
 Debug.log = function log(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.INFO)) return;
   Debug.useConsole() ? console.log(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
 Debug.fatal = function fatal(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.FATAL)) return;
   Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
 };
 
 Debug.error = function error(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.ERROR)) return;
   Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
 };
 
 Debug.info = function info(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.INFO)) return;
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
 Debug.warn = function warn(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.WARN)) return;
   Debug.useConsole() ? console.warn(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
 Debug.debug = function detail(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.DEBUG)) return;
   Debug.useConsole() ? console.debug(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
 Debug.trace = function trace(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.TRACE)) return;
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
 Debug.time = function time(...args: any[]): [number, number] {
+  if (Debug.isBellow(DebugLevel.INFO)) return void null;
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
   return void null;
 };
 
 Debug.end = function end(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.INFO)) return void null;
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
 Debug.timeEnd = function timeEnd(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.INFO)) return void null;
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
