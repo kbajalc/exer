@@ -1,16 +1,18 @@
 import { Debug } from '../src';
 
-Debug.inspectOpts.colors = true;
-Debug.inspectOpts.hideDate = false;
+Debug.inspectOpts.colors = false;
+Debug.inspectOpts.hideDate = true;
 Debug.inspectOpts.alwaysDiff = true;
 
-const g = Debug('test');
+Debug.setLevel('WARN');
+const log = Debug('test');
 
-g('Hello world...');
-g.time('test');
-g.info('Info');
-g.error('Error');
-g.debug('Debug');
-g.trace('Here');
-g.fatal('Fatal');
-g.end('test');
+log('Hello world...');
+log.time('test');
+log.info('Info');
+log.warn('Warn');
+log.error('Error');
+log.debug('Debug');
+log.trace('Here');
+log.fatal('Fatal');
+log.end('test');

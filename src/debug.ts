@@ -57,6 +57,8 @@ export enum DebugLevel {
   OFF = 6,
 }
 
+export type DebugLevelType = 'ALL' | 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL' | 'OFF';
+
 /**
  * Create a debugger with the given `namespace`.
  *
@@ -463,11 +465,15 @@ Debug.isBellow = function isBellow(ofLevel: DebugLevel) {
   return Debug.level() > ofLevel;
 };
 
-Debug.setLevel = function setLevel(toLevel: DebugLevel): void {
+Debug.setLevel = function setLevel(toLevel: DebugLevel | DebugLevelType): void {
   if (toLevel == null || toLevel === undefined) {
     Debug.inspectOpts.level = DebugLevel.OFF;
+  } else if (typeof toLevel === 'number' && String(toLevel) in DebugLevel) {
+    Debug.inspectOpts.level = toLevel;
+  } else if (typeof toLevel === 'string' && toLevel in DebugLevel) {
+    Debug.inspectOpts.level = DebugLevel[toLevel as any] as any;
   } else {
-    Debug.inspectOpts.level = (DebugLevel[toLevel as any] || DebugLevel.INFO) as any;
+    Debug.inspectOpts.level = DebugLevel.INFO;
   }
 };
 
@@ -517,7 +523,7 @@ Debug.debug = function detail(...args: any[]) {
 
 Debug.trace = function trace(...args: any[]) {
   if (Debug.isBellow(DebugLevel.TRACE)) return;
-  Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
+  Debug.useConsole() ? console.debug(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
 Debug.time = function time(...args: any[]): [number, number] {
