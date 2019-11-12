@@ -167,7 +167,7 @@ export class ProcessInfo {
   private static serial: number = 0;
   private static cpuUsage = process.cpuUsage();
 
-  public static get(level?: number): ProcessInfo {
+  public static get(level: number = 0): ProcessInfo {
     const start = Utils.time();
     this.cpuUsage = process.cpuUsage(this.cpuUsage);
 
