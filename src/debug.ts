@@ -237,9 +237,6 @@ Debug.formatArgs = function formatArgs(this: Debugger, fun: any, timer: string, 
   switch (z) {
     case 'log': z = ''; break;
     case 'detail': z = 'debug'; break;
-    case 'fatal': z = 'alert'; break;
-    case 'warn': z = 'warning'; break;
-    case 'time': z = 'time'; break;
     case 'timeEnd': z = 'time'; break;
     case 'end': z = 'time'; break;
   }
@@ -253,7 +250,7 @@ Debug.formatArgs = function formatArgs(this: Debugger, fun: any, timer: string, 
     z = (Debug as any)[`${z}Icon`];
     level = z ? (z + ' ') : level;
   }
-  if (level) level += ' ';
+  if (level && !Debug.inspectOpts.systemd) level += ' ';
 
   const name = `[${this.namespace}]`;
   const msg = trace ? trace.replace('Trace:', args[0] !== '' ? 'Trace: ' + args[0] : 'Trace:') : args[0];
@@ -262,8 +259,10 @@ Debug.formatArgs = function formatArgs(this: Debugger, fun: any, timer: string, 
     args[0] = level + date + name + ' ' + timer + (args.length ? msg : '');
     if (Debug.alwaysDiff()) args.push('+' + Debug.humanize(this.diff));
     let line = util.format.call(util, ...args);
-    // TODO Escape new lines
-    line = line.split('\n').join('\n' + level + date + name + ' ');
+    // line = line.split('\n').join('\n' + level + date + name + ' ');
+    // Escape new lines
+    line = JSON.stringify(line);
+    line = line.substring(1, line.length - 1);
     args[0] = line; args.length = 1;
   } else if (useColors) {
     const c = this.color;
@@ -271,23 +270,13 @@ Debug.formatArgs = function formatArgs(this: Debugger, fun: any, timer: string, 
     const prefix = "".concat(colorCode, ";1m").concat(name, " \x1B[0m");
     args[0] = level + prefix + timer + (args.length ? msg : '');
     args.push(colorCode + 'm+' + Debug.humanize(this.diff) + "\x1B[0m");
-    let line = util.format.call(util, ...args);
-    line = line.split('\n').join('\n' + level + prefix);
-    args[0] = line; args.length = 1;
   } else {
     args[0] = date + level + name + ' ' + timer + (args.length ? msg : '');
     if (Debug.alwaysDiff()) args.push('+' + Debug.humanize(this.diff));
-    let line = util.format.call(util, ...args);
-    // TODO Escape new lines
-    line = line.split('\n').join('\n' + date + level + name + ' ');
-    args[0] = line; args.length = 1;
   }
   // return util.format.call(util, ...args);
 };
 
-// Debug.debug = Debug;
-// Debug.default = Debug;
-// Debug.humanize = require('ms');
 Debug.humanize = (ms: any) => `${ms} ms`;
 
 Debug.times = {} as Record<string, [number, number]>;
@@ -536,16 +525,16 @@ Debug.setLevel = function setLevel(toLevel: DebugLevel | DebugLevelType): void {
 Debug.logIcon = '';
 Debug.emergIcon = '🛑';
 Debug.alertIcon = '🛑';
+Debug.fatalIcon = '🛑';
 Debug.criticalIcon = '🛑';
 Debug.errorIcon = '❗';
 Debug.infoIcon = 'ℹ️';
+Debug.warnIcon = '⚠️';
 Debug.warningIcon = '⚠️';
 Debug.noticeIcon = '⚠️';
 Debug.debugIcon = '🔹';
 Debug.traceIcon = '🔸';
 Debug.timeIcon = '⏱️';
-Debug.endIcon = '⏱️';
-Debug.timeEndIcon = '⏱️';
 
 /**
  * Invokes `util.format()` with the specified arguments and writes to stderr.
