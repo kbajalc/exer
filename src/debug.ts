@@ -26,10 +26,14 @@ export interface Debugger {
   color: number;
   diff: string | number;
   log: (...args: any[]) => void;
+  emerg: (...args: any[]) => void;
+  alert: (...args: any[]) => void;
+  critical: (...args: any[]) => void;
   fatal: (...args: any[]) => void;
   error: (...args: any[]) => void;
   info: (...args: any[]) => void;
   warn: (...args: any[]) => void;
+  notice: (...args: any[]) => void;
   debug: (...args: any[]) => void;
   trace: (...args: any[]) => void;
   time: (...args: any[]) => [number, number];
@@ -43,21 +47,41 @@ interface DebugOptions extends InspectOptions {
   hideDate: boolean;
   useConsole: boolean;
   alwaysDiff: boolean;
+  systemd: boolean;
   level: DebugLevel;
 }
 
 export enum DebugLevel {
-  ALL = 0,
-  TRACE = 0,
-  DEBUG = 1,
-  INFO = 2,
-  WARN = 3,
-  ERROR = 4,
-  FATAL = 5,
-  OFF = 6,
+  OFF = -1,
+  EMERG = 0,
+  FATAL = 1,
+  ALERT = 1,
+  CRITICAL = 2,
+  ERROR = 3,
+  WARN = 4,
+  WARNING = 4,
+  NOTICE = 5,
+  TIME = 6,
+  INFO = 6,
+  DEBUG = 7,
+  ALL = 8,
+  TRACE = 8
 }
 
-export type DebugLevelType = 'ALL' | 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL' | 'OFF';
+export type DebugLevelType =
+  'OFF' |
+  'EMERG' |
+  'FATAL' |
+  'ALERT' |
+  'CRITICAL' |
+  'ERROR' |
+  'WARN' |
+  'NOTICE' |
+  'TIME' |
+  'INFO' |
+  'DEBUG' |
+  'ALL' |
+  'TRACE';
 
 /**
  * Create a debugger with the given `namespace`.
@@ -148,10 +172,14 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
     Debug.formatArgs.call(self, this, timer, stack, args);
     const logFn = (
       this === Debug.log ||
+      this === Debug.emerg ||
+      this === Debug.alert ||
+      this === Debug.critical ||
       this === Debug.fatal ||
       this === Debug.error ||
       this === Debug.info ||
       this === Debug.warn ||
+      this === Debug.notice ||
       this === Debug.debug ||
       this === Debug.trace ||
       this === Debug.time ||
@@ -176,10 +204,14 @@ export function Debug(namespace?: string, enable?: boolean): Debugger {
   debug.curr = undefined as [number, number];
 
   debug.log = debug.bind(Debug.log);
+  debug.emerg = debug.bind(Debug.emerg);
+  debug.alert = debug.bind(Debug.alert);
   debug.fatal = debug.bind(Debug.fatal);
+  debug.critical = debug.bind(Debug.critical);
   debug.error = debug.bind(Debug.error);
-  debug.info = debug.bind(Debug.info);
   debug.warn = debug.bind(Debug.warn);
+  debug.notice = debug.bind(Debug.notice);
+  debug.info = debug.bind(Debug.info);
   debug.debug = debug.bind(Debug.debug);
   debug.trace = debug.bind(Debug.trace);
   debug.time = debug.bind(Debug.time);
@@ -202,12 +234,22 @@ Debug.formatArgs = function formatArgs(this: Debugger, fun: any, timer: string, 
 
   // TODO: Color code per level (fun.color)
   let z = fun && fun.name || '';
-  if (z === 'timeEnd') z = 'time';
-  if (z === 'detail') z = 'debug';
-  if (z === 'log') z = '';
+  switch (z) {
+    case 'log': z = ''; break;
+    case 'detail': z = 'debug'; break;
+    case 'fatal': z = 'alert'; break;
+    case 'warn': z = 'warning'; break;
+    case 'time': z = 'time'; break;
+    case 'timeEnd': z = 'time'; break;
+    case 'end': z = 'time'; break;
+  }
 
   let level = z.toUpperCase();
-  if (this.useColors) {
+  if (Debug.inspectOpts.systemd) {
+    let num: any = DebugLevel[level || 'INFO'];
+    if (num === 8) num = 7;
+    level = `<${num}>`;
+  } else if (this.useColors) {
     z = (Debug as any)[`${z}Icon`];
     level = z ? (z + ' ') : level;
   }
@@ -215,16 +257,30 @@ Debug.formatArgs = function formatArgs(this: Debugger, fun: any, timer: string, 
 
   const name = `[${this.namespace}]`;
   const msg = trace ? trace.replace('Trace:', args[0] !== '' ? 'Trace: ' + args[0] : 'Trace:') : args[0];
-  if (useColors) {
+  const date = getDate();
+  if (Debug.inspectOpts.systemd) {
+    args[0] = level + date + name + ' ' + timer + (args.length ? msg : '');
+    if (Debug.alwaysDiff()) args.push('+' + Debug.humanize(this.diff));
+    let line = util.format.call(util, ...args);
+    // TODO Escape new lines
+    line = line.split('\n').join('\n' + level + date + name + ' ');
+    args[0] = line; args.length = 1;
+  } else if (useColors) {
     const c = this.color;
     const colorCode = "\x1B[3" + (c < 8 ? c : '8;5;' + c);
     const prefix = "".concat(colorCode, ";1m").concat(name, " \x1B[0m");
-
-    args[0] = level + prefix + timer + msg.split('\n').join('\n' + level + prefix);
+    args[0] = level + prefix + timer + (args.length ? msg : '');
     args.push(colorCode + 'm+' + Debug.humanize(this.diff) + "\x1B[0m");
+    let line = util.format.call(util, ...args);
+    line = line.split('\n').join('\n' + level + prefix);
+    args[0] = line; args.length = 1;
   } else {
-    args[0] = getDate() + level + name + ' ' + timer + (args.length ? msg : '')
-      + (Debug.alwaysDiff() ? ' +' + Debug.humanize(this.diff) : '');
+    args[0] = date + level + name + ' ' + timer + (args.length ? msg : '');
+    if (Debug.alwaysDiff()) args.push('+' + Debug.humanize(this.diff));
+    let line = util.format.call(util, ...args);
+    // TODO Escape new lines
+    line = line.split('\n').join('\n' + date + level + name + ' ');
+    args[0] = line; args.length = 1;
   }
   // return util.format.call(util, ...args);
 };
@@ -280,11 +336,11 @@ try {
  */
 // tslint:disable:align
 Debug.inspectOpts = Object.keys(process.env)
-  .filter(key => /^debug_/i.test(key))
+  .filter(key => /^(debug_|log_)/i.test(key))
   .reduce((obj, key) => {
     // Camel-case
     // Coerce string value into JS value
-    const prop = key.substring(6).toLowerCase().replace(/_([a-z])/g, (_, k) => k.toUpperCase());
+    const prop = key.replace(/^(debug_|log_)/i, '').toLowerCase().replace(/_([a-z])/g, (_, k) => k.toUpperCase());
     let val: any = process.env[key];
     // console.log(prop, val);
     if (prop === 'level') {
@@ -462,7 +518,7 @@ Debug.level = function level(): DebugLevel {
 };
 
 Debug.isBellow = function isBellow(ofLevel: DebugLevel) {
-  return Debug.level() > ofLevel;
+  return ofLevel > Debug.level();
 };
 
 Debug.setLevel = function setLevel(toLevel: DebugLevel | DebugLevelType): void {
@@ -478,10 +534,13 @@ Debug.setLevel = function setLevel(toLevel: DebugLevel | DebugLevelType): void {
 };
 
 Debug.logIcon = '';
-Debug.fatalIcon = '🛑';
+Debug.emergIcon = '🛑';
+Debug.alertIcon = '🛑';
+Debug.criticalIcon = '🛑';
 Debug.errorIcon = '❗';
 Debug.infoIcon = 'ℹ️';
-Debug.warnIcon = '⚠️';
+Debug.warningIcon = '⚠️';
+Debug.noticeIcon = '⚠️';
 Debug.debugIcon = '🔹';
 Debug.traceIcon = '🔸';
 Debug.timeIcon = '⏱️';
@@ -496,8 +555,23 @@ Debug.log = function log(...args: any[]) {
   Debug.useConsole() ? console.log(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
+Debug.emerg = function emerg(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.EMERG)) return;
+  Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
+};
+
 Debug.fatal = function fatal(...args: any[]) {
-  if (Debug.isBellow(DebugLevel.FATAL)) return;
+  if (Debug.isBellow(DebugLevel.ALERT)) return;
+  Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
+};
+
+Debug.alert = function alert(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.ALERT)) return;
+  Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
+};
+
+Debug.critical = function critical(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.CRITICAL)) return;
   Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
 };
 
@@ -506,14 +580,19 @@ Debug.error = function error(...args: any[]) {
   Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
 };
 
+Debug.warn = function warn(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.WARNING)) return;
+  Debug.useConsole() ? console.warn(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
+};
+
+Debug.notice = function notice(...args: any[]) {
+  if (Debug.isBellow(DebugLevel.NOTICE)) return;
+  Debug.useConsole() ? console.warn(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
+};
+
 Debug.info = function info(...args: any[]) {
   if (Debug.isBellow(DebugLevel.INFO)) return;
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
-};
-
-Debug.warn = function warn(...args: any[]) {
-  if (Debug.isBellow(DebugLevel.WARN)) return;
-  Debug.useConsole() ? console.warn(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
 Debug.debug = function detail(...args: any[]) {
@@ -527,18 +606,18 @@ Debug.trace = function trace(...args: any[]) {
 };
 
 Debug.time = function time(...args: any[]): [number, number] {
-  if (Debug.isBellow(DebugLevel.INFO)) return void null;
+  if (Debug.isBellow(DebugLevel.TIME)) return void null;
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
   return void null;
 };
 
 Debug.end = function end(...args: any[]) {
-  if (Debug.isBellow(DebugLevel.INFO)) return void null;
+  if (Debug.isBellow(DebugLevel.TIME)) return void null;
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
 Debug.timeEnd = function timeEnd(...args: any[]) {
-  if (Debug.isBellow(DebugLevel.INFO)) return void null;
+  if (Debug.isBellow(DebugLevel.TIME)) return void null;
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 };
 
