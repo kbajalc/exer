@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 
+export * from './crc';
 export * from './file';
 export * from './js';
 export * from './misc';
