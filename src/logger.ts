@@ -46,6 +46,7 @@ export interface Logger {
 
 interface LoggerOptions extends InspectOptions {
   hideDate: boolean;
+  hideLevel: boolean;
   useConsole: boolean;
   alwaysDiff: boolean;
   systemd: boolean;
@@ -271,6 +272,7 @@ Log.formatArgs = function formatArgs(this: Logger, fun: any, timer: string, trac
     args[0] = level + prefix + timer + (args.length ? msg : '');
     args.push(colorCode + 'm+' + Log.humanize(this.diff) + "\x1B[0m");
   } else {
+    if (Log.inspectOpts.hideLevel) level = '';
     args[0] = date + level + name + ' ' + timer + (args.length ? msg : '');
     if (Log.alwaysDiff()) args.push('+' + Log.humanize(this.diff));
   }

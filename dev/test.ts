@@ -1,7 +1,8 @@
 import { Log } from '../src';
 
-Log.inspectOpts.colors = true;
-// Debug.inspectOpts.hideDate = true;
+Log.inspectOpts.colors = false;
+Log.inspectOpts.hideDate = true;
+Log.inspectOpts.hideLevel = true;
 // Debug.inspectOpts.systemd = true;
 // Debug.inspectOpts.alwaysDiff = true;
 
