@@ -21,7 +21,8 @@
   "types": "./lib/index.d.ts",
   "source": "./src/index.ts",
   "files": [
-    "lib"
+    "lib",
+    "src"
   ],
   "origin": {
     "debug": "4.1.0",
