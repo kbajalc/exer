@@ -1,12 +1,12 @@
-import { Debug } from '../src';
+import { Log } from '../src';
 
-Debug.inspectOpts.colors = true;
+Log.inspectOpts.colors = true;
 // Debug.inspectOpts.hideDate = true;
 // Debug.inspectOpts.systemd = true;
 // Debug.inspectOpts.alwaysDiff = true;
 
-Debug.setLevel('ALL');
-const log = Debug('test');
+Log.setLevel('ALL');
+const log = Log.get('test');
 
 log('Hello world...');
 
