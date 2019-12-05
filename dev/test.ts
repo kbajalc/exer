@@ -1,8 +1,8 @@
 import { Debug } from '../src';
 
-Debug.inspectOpts.colors = false;
-Debug.inspectOpts.hideDate = true;
-Debug.inspectOpts.systemd = true;
+Debug.inspectOpts.colors = true;
+// Debug.inspectOpts.hideDate = true;
+// Debug.inspectOpts.systemd = true;
 // Debug.inspectOpts.alwaysDiff = true;
 
 Debug.setLevel('ALL');

@@ -233,21 +233,16 @@ Debug.formatArgs = function formatArgs(this: Debugger, fun: any, timer: string, 
   const useColors = this.useColors;
 
   // TODO: Color code per level (fun.color)
-  let z = fun && fun.name || '';
-  switch (z) {
-    case 'log': z = ''; break;
-    case 'detail': z = 'debug'; break;
-    case 'timeEnd': z = 'time'; break;
-    case 'end': z = 'time'; break;
-  }
-
+  let z = fun && fun.level || '';
   let level = z.toUpperCase();
+  const tmp = level;
+  level = level === 'END' ? 'TIME' : level;
   if (Debug.inspectOpts.systemd) {
-    let num: any = DebugLevel[level || 'INFO'];
+    let num: any = DebugLevel[tmp || 'INFO'];
     if (num === 8) num = 7;
     level = `<${num}>`;
   } else if (this.useColors) {
-    z = (Debug as any)[`${z}Icon`];
+    z = (Debug as any)[`${tmp.toLowerCase()}Icon`];
     level = z ? (z + ' ') : level;
   }
   if (level && !Debug.inspectOpts.systemd) level += ' ';
@@ -523,92 +518,118 @@ Debug.setLevel = function setLevel(toLevel: DebugLevel | DebugLevelType): void {
 };
 
 Debug.logIcon = '';
-Debug.emergIcon = '🛑';
-Debug.alertIcon = '🛑';
-Debug.fatalIcon = '🛑';
-Debug.criticalIcon = '🛑';
-Debug.errorIcon = '❗';
+Debug.emergIcon = '☠️';
+Debug.alertIcon = '🔥';
+Debug.criticalIcon = '⛔';
+Debug.errorIcon = '🔴';
 Debug.infoIcon = 'ℹ️';
 Debug.warnIcon = '⚠️';
-Debug.warningIcon = '⚠️';
-Debug.noticeIcon = '⚠️';
-Debug.debugIcon = '🔹';
-Debug.traceIcon = '🔸';
-Debug.timeIcon = '⏱️';
+Debug.noticeIcon = '🔔';
+Debug.debugIcon = '🔷';
+Debug.traceIcon = '🔶';
+Debug.timeIcon = '⏳';
+Debug.endIcon = '⌛';
 
 /**
  * Invokes `util.format()` with the specified arguments and writes to stderr.
  */
-Debug.log = function log(...args: any[]) {
+function log(...args: any[]) {
   if (Debug.isBellow(DebugLevel.INFO)) return;
   Debug.useConsole() ? console.log(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
-};
+}
+log.level = 'INFO';
+Debug.log = log;
 
-Debug.emerg = function emerg(...args: any[]) {
+function emerg(...args: any[]) {
   if (Debug.isBellow(DebugLevel.EMERG)) return;
   Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
-};
+}
+emerg.level = 'EMERG';
+Debug.emerg = emerg;
 
-Debug.fatal = function fatal(...args: any[]) {
+function fatal(...args: any[]) {
   if (Debug.isBellow(DebugLevel.ALERT)) return;
   Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
-};
+}
+fatal.level = 'ALERT';
+Debug.fatal = fatal;
 
-Debug.alert = function alert(...args: any[]) {
+function alert(...args: any[]) {
   if (Debug.isBellow(DebugLevel.ALERT)) return;
   Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
-};
+}
+alert.level = 'ALERT';
+Debug.alert = alert;
 
-Debug.critical = function critical(...args: any[]) {
+function critical(...args: any[]) {
   if (Debug.isBellow(DebugLevel.CRITICAL)) return;
   Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
-};
+}
+critical.level = 'CRITICAL';
+Debug.critical = critical;
 
-Debug.error = function error(...args: any[]) {
+function error(...args: any[]) {
   if (Debug.isBellow(DebugLevel.ERROR)) return;
   Debug.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
-};
+}
+error.level = 'ERROR';
+Debug.error = error;
 
-Debug.warn = function warn(...args: any[]) {
+function warn(...args: any[]) {
   if (Debug.isBellow(DebugLevel.WARNING)) return;
   Debug.useConsole() ? console.warn(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
-};
+}
+warn.level = 'WARN';
+Debug.warn = warn;
 
-Debug.notice = function notice(...args: any[]) {
+function notice(...args: any[]) {
   if (Debug.isBellow(DebugLevel.NOTICE)) return;
   Debug.useConsole() ? console.warn(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
-};
+}
+notice.level = 'NOTICE';
+Debug.notice = notice;
 
-Debug.info = function info(...args: any[]) {
+function info(...args: any[]) {
   if (Debug.isBellow(DebugLevel.INFO)) return;
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
-};
+}
+info.level = 'INFO';
+Debug.info = info;
 
-Debug.debug = function detail(...args: any[]) {
+function detail(...args: any[]) {
   if (Debug.isBellow(DebugLevel.DEBUG)) return;
   Debug.useConsole() ? console.debug(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
-};
+}
+detail.level = 'DEBUG';
+Debug.debug = detail;
 
-Debug.trace = function trace(...args: any[]) {
+function trace(...args: any[]) {
   if (Debug.isBellow(DebugLevel.TRACE)) return;
   Debug.useConsole() ? console.debug(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
-};
+}
+trace.level = 'TRACE';
+Debug.trace = trace;
 
-Debug.time = function time(...args: any[]): [number, number] {
-  if (Debug.isBellow(DebugLevel.TIME)) return void null;
+function time(...args: any[]): any {
+  if (Debug.isBellow(DebugLevel.TIME)) return;
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
-  return void null;
-};
+}
+time.level = 'TIME';
+Debug.time = time;
 
-Debug.end = function end(...args: any[]) {
-  if (Debug.isBellow(DebugLevel.TIME)) return void null;
+function end(...args: any[]): any {
+  if (Debug.isBellow(DebugLevel.TIME)) return;
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
-};
+}
+end.level = 'END';
+Debug.end = end;
 
-Debug.timeEnd = function timeEnd(...args: any[]) {
-  if (Debug.isBellow(DebugLevel.TIME)) return void null;
+function timeEnd(...args: any[]): any {
+  if (Debug.isBellow(DebugLevel.TIME)) return;
   Debug.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
-};
+}
+timeEnd.level = 'END';
+Debug.timeEnd = timeEnd;
 
 Debug.millis = function millis(span: [number, number], offset?: number): string {
   const ms = (span[0] * 1000) + Math.floor(span[1] / 1000000) - (offset || 0);
