@@ -540,98 +540,98 @@ Log.endIcon = '⌛';
 /**
  * Invokes `util.format()` with the specified arguments and writes to stderr.
  */
-function log(...args: any[]) {
+export function log(...args: any[]) {
   if (Log.isBellow(LoggerLevel.INFO)) return;
   Log.useConsole() ? console.log(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 }
 log.level = 'INFO';
 Log.log = log;
 
-function emerg(...args: any[]) {
+export function emerg(...args: any[]) {
   if (Log.isBellow(LoggerLevel.EMERG)) return;
   Log.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
 }
 emerg.level = 'EMERG';
 Log.emerg = emerg;
 
-function fatal(...args: any[]) {
+export function fatal(...args: any[]) {
   if (Log.isBellow(LoggerLevel.ALERT)) return;
   Log.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
 }
 fatal.level = 'ALERT';
 Log.fatal = fatal;
 
-function alert(...args: any[]) {
+export function alert(...args: any[]) {
   if (Log.isBellow(LoggerLevel.ALERT)) return;
   Log.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
 }
 alert.level = 'ALERT';
 Log.alert = alert;
 
-function critical(...args: any[]) {
+export function critical(...args: any[]) {
   if (Log.isBellow(LoggerLevel.CRITICAL)) return;
   Log.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
 }
 critical.level = 'CRITICAL';
 Log.critical = critical;
 
-function error(...args: any[]) {
+export function error(...args: any[]) {
   if (Log.isBellow(LoggerLevel.ERROR)) return;
   Log.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
 }
 error.level = 'ERROR';
 Log.error = error;
 
-function warn(...args: any[]) {
+export function warn(...args: any[]) {
   if (Log.isBellow(LoggerLevel.WARNING)) return;
   Log.useConsole() ? console.warn(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 }
 warn.level = 'WARN';
 Log.warn = warn;
 
-function notice(...args: any[]) {
+export function notice(...args: any[]) {
   if (Log.isBellow(LoggerLevel.NOTICE)) return;
   Log.useConsole() ? console.warn(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 }
 notice.level = 'NOTICE';
 Log.notice = notice;
 
-function info(...args: any[]) {
+export function info(...args: any[]) {
   if (Log.isBellow(LoggerLevel.INFO)) return;
   Log.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 }
 info.level = 'INFO';
 Log.info = info;
 
-function debug(...args: any[]) {
+export function debug(...args: any[]) {
   if (Log.isBellow(LoggerLevel.DEBUG)) return;
   Log.useConsole() ? console.debug(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 }
 debug.level = 'DEBUG';
 Log.debug = debug;
 
-function trace(...args: any[]) {
+export function trace(...args: any[]) {
   if (Log.isBellow(LoggerLevel.TRACE)) return;
   Log.useConsole() ? console.debug(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 }
 trace.level = 'TRACE';
 Log.trace = trace;
 
-function time(...args: any[]): any {
+export function time(...args: any[]): any {
   if (Log.isBellow(LoggerLevel.TIME)) return;
   Log.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 }
 time.level = 'TIME';
 Log.time = time;
 
-function end(...args: any[]): any {
+export function end(...args: any[]): any {
   if (Log.isBellow(LoggerLevel.TIME)) return;
   Log.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 }
 end.level = 'END';
 Log.end = end;
 
-function timeEnd(...args: any[]): any {
+export function timeEnd(...args: any[]): any {
   if (Log.isBellow(LoggerLevel.TIME)) return;
   Log.useConsole() ? console.info(...args) : process.stdout.write(util.format.call(util, ...args) + '\n');
 }
@@ -682,5 +682,4 @@ function extend(this: any, namespace: string, delimiter: string) {
   return Log(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
 }
 
-export { Log as debug, Logger as IDebugger };
 export default Log;
