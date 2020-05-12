@@ -172,6 +172,6 @@ export function adler32(buf: Buffer, offset?: number, length?: number) {
 //   return (crc ^ (-1)) >>> 0;
 // }
 
-console.log(crc32(Buffer.from('test')).toString(16));
-console.log(crc16ccitt(Buffer.from('test')).toString(16));
-console.log(crc16modbus(Buffer.from('test')).toString(16));
+// console.log(crc32(Buffer.from('test')).toString(16));
+// console.log(crc16ccitt(Buffer.from('test')).toString(16));
+// console.log(crc16modbus(Buffer.from('test')).toString(16));
