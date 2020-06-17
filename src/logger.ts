@@ -267,10 +267,10 @@ Log.formatArgs = function formatArgs(this: Logger, fun: any, timer: string, trac
     args[0] = line; args.length = 1;
   } else if (useColors) {
     const c = this.color;
-    const colorCode = "\x1B[3" + (c < 8 ? c : '8;5;' + c);
-    const prefix = "".concat(colorCode, ";1m").concat(name, " \x1B[0m");
+    const colorCode = '\x1B[3' + (c < 8 ? c : '8;5;' + c);
+    const prefix = ''.concat(colorCode, ';1m').concat(name, ' \x1B[0m');
     args[0] = level + prefix + timer + (args.length ? msg : '');
-    args.push(colorCode + 'm+' + Log.humanize(this.diff) + "\x1B[0m");
+    args.push(colorCode + 'm+' + Log.humanize(this.diff) + '\x1B[0m');
   } else {
     if (Log.inspectOpts.hideLevel) level = '';
     args[0] = date + level + name + ' ' + timer + (args.length ? msg : '');
