@@ -558,7 +558,7 @@ export function fatal(...args: any[]) {
   if (Log.isBellow(LoggerLevel.ALERT)) return;
   Log.useConsole() ? console.error(...args) : process.stderr.write(util.format.call(util, ...args) + '\n');
 }
-fatal.level = 'ALERT';
+fatal.level = 'FATAL';
 Log.fatal = fatal;
 
 export function alert(...args: any[]) {
