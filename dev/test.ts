@@ -1,3 +1,4 @@
+import assert = require('assert');
 import { Log } from '../src';
 
 Log.inspectOpts.colors = false;
@@ -8,6 +9,9 @@ Log.inspectOpts.hideLevel = true;
 
 Log.setLevel('ALL');
 const log = Log.get('test');
+const log2 = Log.get('test');
+
+assert(log === log2);
 
 log('Hello world...');
 
@@ -24,6 +28,7 @@ log.error('Prefix', new Error('Test'));
 
 log.trace('Here');
 log.time('test');
-log.timeEnd('test');
+const res = log.timeEnd('test');
+assert(res);
 
 log.info('Json: %j', process.env);

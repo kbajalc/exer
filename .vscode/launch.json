@@ -16,6 +16,18 @@
       "outFiles": [
         "${workspaceRoot}/lib/**/*.js"
       ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "EXER TypeScript",
+      "program": "${workspaceFolder}/node_modules/.bin/ts-node",
+      "args": [
+          "${file}"
+      ],
+      "cwd": "${workspaceRoot}",
+      "sourceMaps": true,
+      "showAsyncStacks": true
     }
   ]
 }

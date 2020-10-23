@@ -98,9 +98,6 @@ export function Log(namespace?: string, enable?: boolean): Logger {
   namespace = namespace || 'logger';
 
   function logger(this: Function, ...args: any[]): any {
-    // Disabled?
-    if (!logger.enabled) return;
-
     const self = logger;
 
     let hrt = process.hrtime();
@@ -112,10 +109,7 @@ export function Log(namespace?: string, enable?: boolean): Logger {
 
     // TODO: Move to functions
     let timer = '';
-    let stack = '';
-    if (this === Log.trace) {
-      stack = new Error().stack.replace('Error', 'Trace').split('\n').filter((t, i) => i !== 1).join('\n');
-    } else if (this === Log.time) {
+    if (this === Log.time) {
       const label = args.shift();
       if (!label) {
         return hrt;
@@ -140,6 +134,17 @@ export function Log(namespace?: string, enable?: boolean): Logger {
       const dif = Log.humanize(Log.millis(hrt));
       delete Log.times[label];
       timer = Array.isArray(first) ? `(${dif})` : `(${label}: ${dif})`;
+    }
+
+    // Disabled?
+    if (!logger.enabled) return hrt;
+    let level = this && (this as any).level || 'DEBUG';
+    if (level === 'END') level = 'TIME';
+    if (Log.isBellow((LoggerLevel as any)[level])) return hrt;
+
+    let stack = '';
+    if (this === Log.trace) {
+      stack = new Error().stack.replace('Error', 'Trace').split('\n').filter((t, i) => i !== 1).join('\n');
     }
     if (timer && args.length === 0) {
       args.push(timer);
@@ -227,7 +232,8 @@ export function Log(namespace?: string, enable?: boolean): Logger {
 }
 
 Log.get = function get(namespace: string, enable?: boolean) {
-  return Log(namespace, enable === undefined ? true : enable);
+  const ins = Log.instances.find(i => i.namespace === namespace);
+  return ins || Log(namespace, enable === undefined ? true : enable);
 };
 
 /**
